@@ -1,0 +1,324 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Geeta RAG Chat — System Flow",
+    "locale": "en",
+    "output": "system-flow.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "startup-indexing",
+        "label": "Startup indexing",
+        "focus": [
+          "launch",
+          "load",
+          "chunk",
+          "upsert"
+        ],
+        "note": "On launch the CLI reads data/raw, chunks it into 50-word pieces, embeds and upserts into ChromaDB."
+      },
+      {
+        "id": "question-answer",
+        "label": "Question → answer",
+        "focus": [
+          "ask",
+          "keycheck",
+          "embedq",
+          "search",
+          "prompt",
+          "groq",
+          "answer"
+        ],
+        "note": "Each question is embedded, matched against the top-5 chunks, and answered by the Groq LLM."
+      },
+      {
+        "id": "chat-loop",
+        "label": "Chat loop + exit",
+        "focus": [
+          "ask",
+          "answer",
+          "quit"
+        ],
+        "note": "The CLI prints the answer and asks again until the child types exit or quit."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "indexing",
+      "label": "Indexing (on startup)"
+    },
+    {
+      "id": "ui",
+      "label": "Child / CLI"
+    },
+    {
+      "id": "pipeline",
+      "label": "RAG pipeline + retrieval"
+    },
+    {
+      "id": "llm",
+      "label": "Answer generation"
+    }
+  ],
+  "phases": [
+    {
+      "id": "prepare",
+      "label": "Prepare knowledge",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "retrieve",
+      "label": "Ask + retrieve",
+      "fromCol": 2,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "respond",
+      "label": "Respond",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "launch",
+    "load",
+    "chunk",
+    "upsert",
+    "ask",
+    "keycheck",
+    "embedq",
+    "search",
+    "prompt",
+    "groq",
+    "answer"
+  ],
+  "nodes": [
+    {
+      "id": "load",
+      "lane": "indexing",
+      "col": 0,
+      "type": "database",
+      "label": "Load texts",
+      "sublabel": "data/raw *.txt *.md",
+      "width": 140
+    },
+    {
+      "id": "chunk",
+      "lane": "indexing",
+      "col": 1,
+      "type": "backend",
+      "label": "Chunk + embed",
+      "sublabel": "50 words · MiniLM",
+      "width": 140
+    },
+    {
+      "id": "upsert",
+      "lane": "indexing",
+      "col": 2,
+      "type": "database",
+      "label": "Upsert",
+      "sublabel": "Chroma rag_collection",
+      "width": 150
+    },
+    {
+      "id": "launch",
+      "lane": "ui",
+      "col": 0,
+      "type": "frontend",
+      "label": "Launch CLI",
+      "sublabel": "rag_app.cli",
+      "width": 140
+    },
+    {
+      "id": "quit",
+      "lane": "ui",
+      "col": 1,
+      "type": "external",
+      "label": "Exit",
+      "sublabel": "exit / quit / EOF",
+      "width": 130
+    },
+    {
+      "id": "ask",
+      "lane": "ui",
+      "col": 2,
+      "type": "external",
+      "label": "Ask question",
+      "sublabel": "input()",
+      "width": 140
+    },
+    {
+      "id": "answer",
+      "lane": "ui",
+      "col": 5,
+      "type": "frontend",
+      "label": "Print answer",
+      "sublabel": "kid-friendly reply",
+      "width": 140
+    },
+    {
+      "id": "keycheck",
+      "lane": "pipeline",
+      "col": 2,
+      "type": "security",
+      "label": "Check API key",
+      "sublabel": "GROQ_API_KEY",
+      "tag": "getpass if missing",
+      "width": 150
+    },
+    {
+      "id": "embedq",
+      "lane": "pipeline",
+      "col": 3,
+      "type": "backend",
+      "label": "Embed query",
+      "sublabel": "all-MiniLM-L6-v2",
+      "width": 140
+    },
+    {
+      "id": "search",
+      "lane": "pipeline",
+      "col": 4,
+      "type": "database",
+      "label": "Vector search",
+      "sublabel": "Chroma top_k = 5",
+      "width": 140
+    },
+    {
+      "id": "prompt",
+      "lane": "llm",
+      "col": 4,
+      "type": "backend",
+      "label": "Build prompt",
+      "sublabel": "context + question",
+      "width": 140
+    },
+    {
+      "id": "groq",
+      "lane": "llm",
+      "col": 5,
+      "type": "cloud",
+      "label": "Groq LLM",
+      "sublabel": "gpt-oss-safeguard-20b",
+      "tag": "Gita system prompt",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "launch-load",
+      "from": "launch",
+      "to": "load",
+      "label": "start",
+      "role": "main"
+    },
+    {
+      "id": "load-chunk",
+      "from": "load",
+      "to": "chunk",
+      "role": "main"
+    },
+    {
+      "id": "chunk-upsert",
+      "from": "chunk",
+      "to": "upsert",
+      "label": "vectors",
+      "role": "main"
+    },
+    {
+      "id": "upsert-ask",
+      "from": "upsert",
+      "to": "ask",
+      "label": "ready",
+      "role": "main"
+    },
+    {
+      "id": "ask-quit",
+      "from": "ask",
+      "to": "quit",
+      "label": "exit",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "ask-keycheck",
+      "from": "ask",
+      "to": "keycheck",
+      "label": "run_rag",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "keycheck-embed",
+      "from": "keycheck",
+      "to": "embedq",
+      "role": "main"
+    },
+    {
+      "id": "embed-search",
+      "from": "embedq",
+      "to": "search",
+      "role": "main"
+    },
+    {
+      "id": "search-prompt",
+      "from": "search",
+      "to": "prompt",
+      "label": "contexts",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "prompt-groq",
+      "from": "prompt",
+      "to": "groq",
+      "role": "main"
+    },
+    {
+      "id": "groq-answer",
+      "from": "groq",
+      "to": "answer",
+      "label": "answer",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "next-question",
+      "from": "answer",
+      "to": "ask",
+      "label": "next question",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Startup",
+      "items": [
+        "CLI runs embeding_pipeline() first",
+        "ingest_documents.py does the same"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Per question",
+      "items": [
+        "run_rag() → search() → Chroma",
+        "generate_answer() → call_groq()"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "API path",
+      "items": [
+        "POST /query calls run_rag() once"
+      ]
+    }
+  ]
+}

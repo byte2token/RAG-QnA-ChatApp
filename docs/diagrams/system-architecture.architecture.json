@@ -1,0 +1,424 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GeetaUpdeshForKids RAG Chat — System Architecture",
+    "locale": "en",
+    "output": "system-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/byte2token/RAG-QnA-ChatApp",
+      "provider": "github",
+      "revision": "878329ce20ddf0ca33aa5b8108f72c7f62d4d05a"
+    },
+    "views": [
+      {
+        "id": "query-path",
+        "label": "Question → answer",
+        "focus": [
+          "child",
+          "cli",
+          "api",
+          "rag",
+          "retriever",
+          "embed",
+          "chroma",
+          "generator",
+          "groq"
+        ],
+        "note": "A child's question is embedded, matched in ChromaDB, and answered by the Groq LLM."
+      },
+      {
+        "id": "indexing-path",
+        "label": "Indexing",
+        "focus": [
+          "raw",
+          "indexer",
+          "embed",
+          "chroma"
+        ],
+        "note": "Source texts are chunked into 50-word pieces, embedded, and upserted into ChromaDB."
+      },
+      {
+        "id": "shared-core",
+        "label": "Shared embedding + store",
+        "focus": [
+          "indexer",
+          "retriever",
+          "embed",
+          "chroma"
+        ],
+        "note": "Indexing and retrieval share the same SentenceTransformer model and Chroma collection."
+      }
+    ],
+    "viewBox": [
+      1140,
+      640
+    ]
+  },
+  "components": [
+    {
+      "id": "child",
+      "type": "external",
+      "label": "Child / User",
+      "sublabel": "asks a question",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "cli",
+      "type": "frontend",
+      "label": "CLI",
+      "sublabel": "rag_app.cli",
+      "pos": [
+        250,
+        220
+      ],
+      "size": [
+        130,
+        60
+      ],
+      "brand": "python",
+      "sources": [
+        {
+          "path": "src/rag_app/cli.py",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "frontend",
+      "label": "FastAPI",
+      "sublabel": "POST /query :8000",
+      "pos": [
+        250,
+        380
+      ],
+      "size": [
+        130,
+        60
+      ],
+      "brand": "fastapi",
+      "sources": [
+        {
+          "path": "src/rag_app/api/main.py",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "id": "rag",
+      "type": "backend",
+      "label": "RAG Pipeline",
+      "sublabel": "run_rag()",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ],
+      "tag": "top_k = 5",
+      "sources": [
+        {
+          "path": "src/rag_app/pipelines/rag_pipeline.py",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "id": "retriever",
+      "type": "backend",
+      "label": "Retriever",
+      "sublabel": "search → retrieve",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ],
+      "sources": [
+        {
+          "path": "src/rag_app/retrieval/retriever.py",
+          "line": 5
+        },
+        {
+          "path": "src/rag_app/retrieval/search_service.py",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "embed",
+      "type": "backend",
+      "label": "Embedding Service",
+      "sublabel": "all-MiniLM-L6-v2",
+      "pos": [
+        880,
+        180
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "brand": "hugging-face",
+      "sources": [
+        {
+          "path": "src/rag_app/embeddings/embedding_service.py",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "id": "chroma",
+      "type": "database",
+      "label": "ChromaDB",
+      "sublabel": "rag_collection",
+      "pos": [
+        880,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "data/chroma",
+      "sources": [
+        {
+          "path": "src/rag_app/vectorstore/chroma_store.py",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "generator",
+      "type": "backend",
+      "label": "Response Generator",
+      "sublabel": "build_prompt()",
+      "pos": [
+        450,
+        520
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "src/rag_app/llm/response_generator.py",
+          "line": 5
+        },
+        {
+          "path": "src/rag_app/llm/prompt_templates.py",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "groq",
+      "type": "external",
+      "label": "Groq API",
+      "sublabel": "gpt-oss-safeguard-20b",
+      "pos": [
+        700,
+        520
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sources": [
+        {
+          "path": "src/rag_app/llm/llm_client.py",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "raw",
+      "type": "database",
+      "label": "Source Texts",
+      "sublabel": "data/raw/*.txt, *.md",
+      "pos": [
+        460,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "src/rag_app/ingestion/document_loader.py",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "indexer",
+      "type": "backend",
+      "label": "Indexing Pipeline",
+      "sublabel": "chunk 50 words",
+      "pos": [
+        670,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "src/rag_app/pipelines/indexing_pipeline.py",
+          "line": 8
+        },
+        {
+          "path": "src/rag_app/ingestion/chunker.py",
+          "line": 5
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ask-cli",
+      "from": "child",
+      "to": "cli",
+      "label": "question"
+    },
+    {
+      "id": "ask-api",
+      "from": "child",
+      "to": "api",
+      "label": "HTTP"
+    },
+    {
+      "id": "cli-rag",
+      "from": "cli",
+      "to": "rag",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-rag",
+      "from": "api",
+      "to": "rag"
+    },
+    {
+      "id": "rag-search",
+      "from": "rag",
+      "to": "retriever",
+      "label": "search",
+      "variant": "emphasis"
+    },
+    {
+      "id": "embed-query",
+      "from": "retriever",
+      "to": "embed",
+      "label": "embed query",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "vector-query",
+      "from": "retriever",
+      "to": "chroma",
+      "label": "query",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "rag-generate",
+      "from": "rag",
+      "to": "generator",
+      "label": "contexts",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        525,
+        440
+      ]
+    },
+    {
+      "id": "llm-call",
+      "from": "generator",
+      "to": "groq",
+      "label": "chat completion",
+      "variant": "emphasis"
+    },
+    {
+      "id": "read-files",
+      "from": "raw",
+      "to": "indexer",
+      "label": "read"
+    },
+    {
+      "id": "embed-chunks",
+      "from": "indexer",
+      "to": "embed",
+      "label": "embed chunks",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "upsert",
+      "from": "indexer",
+      "to": "chroma",
+      "label": "upsert",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right",
+      "via": [
+        [
+          745,
+          30
+        ],
+        [
+          1090,
+          30
+        ],
+        [
+          1090,
+          450
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Entry points",
+      "items": [
+        "CLI re-indexes data/raw on start, then loops on questions",
+        "FastAPI exposes GET /health and POST /query (Docker, uvicorn :8000)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Retrieval",
+      "items": [
+        "Query embedded with all-MiniLM-L6-v2",
+        "Top-5 nearest chunks from Chroma rag_collection"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Generation",
+      "items": [
+        "Contexts + question formatted by build_prompt()",
+        "Groq chat completion with a kid-friendly Gita system prompt"
+      ]
+    }
+  ]
+}
