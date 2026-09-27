@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Geeta RAG Chat — Data Flow Loop",
+    "locale": "en",
+    "output": "data-flow-loop.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "question-out",
+        "label": "Question → vector search",
+        "focus": [
+          "child",
+          "cli-in",
+          "rag",
+          "embed",
+          "chroma"
+        ],
+        "note": "The question travels as text, becomes a 384-d vector, and is matched in ChromaDB."
+      },
+      {
+        "id": "answer-back",
+        "label": "Chunks → answer",
+        "focus": [
+          "chroma",
+          "generator",
+          "groq",
+          "cli-out",
+          "child"
+        ],
+        "note": "Top-5 chunks become a grounded prompt; Groq's answer is printed back to the child."
+      },
+      {
+        "id": "knowledge-feed",
+        "label": "Knowledge feed",
+        "focus": [
+          "indexer",
+          "chroma"
+        ],
+        "note": "At startup, data/raw is chunked, embedded and upserted so the loop has knowledge to search."
+      }
+    ],
+    "viewBox": [
+      1080,
+      560
+    ]
+  },
+  "stages": [
+    {
+      "label": "Child"
+    },
+    {
+      "label": "CLI / FastAPI"
+    },
+    {
+      "label": "Pipeline + LLM"
+    },
+    {
+      "label": "Embed + prompt"
+    },
+    {
+      "label": "Vector store"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "child",
+      "type": "external",
+      "label": "Child",
+      "sublabel": "reads + asks again",
+      "stage": 0,
+      "row": 1,
+      "tag": "loop start"
+    },
+    {
+      "id": "cli-in",
+      "type": "frontend",
+      "label": "CLI input",
+      "sublabel": "input() / POST /query",
+      "stage": 1,
+      "row": 0
+    },
+    {
+      "id": "rag",
+      "type": "backend",
+      "label": "RAG Pipeline",
+      "sublabel": "run_rag()",
+      "stage": 2,
+      "row": 0,
+      "tag": "top_k = 5"
+    },
+    {
+      "id": "embed",
+      "type": "backend",
+      "label": "Embedding Service",
+      "sublabel": "all-MiniLM-L6-v2",
+      "stage": 3,
+      "row": 0
+    },
+    {
+      "id": "chroma",
+      "type": "database",
+      "label": "ChromaDB",
+      "sublabel": "rag_collection",
+      "stage": 4,
+      "row": 1,
+      "tag": "data/chroma"
+    },
+    {
+      "id": "generator",
+      "type": "backend",
+      "label": "Response Generator",
+      "sublabel": "build_prompt()",
+      "stage": 3,
+      "row": 2
+    },
+    {
+      "id": "groq",
+      "type": "cloud",
+      "label": "Groq LLM",
+      "sublabel": "gpt-oss-safeguard-20b",
+      "stage": 2,
+      "row": 2,
+      "tag": "Gita system prompt"
+    },
+    {
+      "id": "cli-out",
+      "type": "frontend",
+      "label": "CLI output",
+      "sublabel": "print() / JSON",
+      "stage": 1,
+      "row": 2
+    },
+    {
+      "id": "indexer",
+      "type": "backend",
+      "label": "Indexing Pipeline",
+      "sublabel": "data/raw → chunks",
+      "stage": 4,
+      "row": 0,
+      "tag": "runs at startup"
+    }
+  ],
+  "flows": [
+    {
+      "id": "f-question",
+      "from": "child",
+      "to": "cli-in",
+      "label": "question",
+      "classification": "text",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-query",
+      "from": "cli-in",
+      "to": "rag",
+      "label": "query",
+      "classification": "str",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-embed",
+      "from": "rag",
+      "to": "embed",
+      "label": "query text",
+      "classification": "str",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-vector",
+      "from": "embed",
+      "to": "chroma",
+      "label": "query vector",
+      "classification": "384-d float",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-chunks",
+      "from": "chroma",
+      "to": "generator",
+      "label": "top-5 chunks",
+      "classification": "contexts",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-prompt",
+      "from": "generator",
+      "to": "groq",
+      "label": "prompt",
+      "classification": "system + user",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-answer",
+      "from": "groq",
+      "to": "cli-out",
+      "label": "answer",
+      "classification": "text",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-reply",
+      "from": "cli-out",
+      "to": "child",
+      "label": "reply",
+      "classification": "next turn",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-upsert",
+      "from": "indexer",
+      "to": "chroma",
+      "label": "chunk vectors",
+      "classification": "upsert",
+      "variant": "dashed",
+      "labelAt": [
+        960,
+        216
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Outbound",
+      "items": [
+        "question → query vector",
+        "Matched in Chroma rag_collection"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Return",
+      "items": [
+        "top-5 chunks → prompt → answer",
+        "Chunks pass via run_rag()"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Loop",
+      "items": [
+        "CLI repeats until exit / quit"
+      ]
+    }
+  ]
+}
